@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Your MongoDB connection URI
-const uri = process.env.MONGODB;
+const uri = process.env.MONGO_URL;
 
 
 if (!uri) {
