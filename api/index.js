@@ -1,7 +1,7 @@
-require('dotenv').config(); 
+
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 5000;
+const port = 5000;
 const cors = require('cors');
 
 // Middleware to connect to the frontend
@@ -16,11 +16,11 @@ app.get('/', (req, res) => {
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Your MongoDB connection URI
-const uri = process.env.MONGO_URL;
+const uri = "mongodb+srv://yash042002:HuWTcgEBT0bcUJsR@cluster0.rsf6d.mongodb.net/items?retryWrites=true&w=majority&appName=Cluster0";
 
 
 if (!uri) {
-    throw new Error('MongoDB connection string is not defined in .env file');
+    throw new Error('MongoDB connection string is not defined in  file');
 }
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
