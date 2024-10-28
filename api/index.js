@@ -1,4 +1,3 @@
-
 const express = require('express');
 const app = express();
 const port = 5000;
@@ -9,19 +8,14 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send("folo me");
-});
+    res.send("Follow me");
+}); 
 
 // Import MongoDB client and API version
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Your MongoDB connection URI
 const uri = "mongodb+srv://yash042002:HuWTcgEBT0bcUJsR@cluster0.rsf6d.mongodb.net/items?retryWrites=true&w=majority&appName=Cluster0";
-
-
-if (!uri) {
-    throw new Error('MongoDB connection string is not defined in  file');
-}
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -42,72 +36,93 @@ async function run() {
 
         // Insert an item to the database: POST method
         app.post("/upload-item", async (req, res) => {
-            const data = req.body;
-            const result = await itemCollections.insertOne(data);
-            res.send(result);
+            try {
+                const data = req.body;
+                const result = await itemCollections.insertOne(data);
+                res.status(201).send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error uploading item" });
+            }
         });
 
-        //get items
-        app.get("/all-items", async(req, res)=>{
-            const items=itemCollections.find();
-            const result=await items.toArray();
-            res.send(result);
-        })
+        // Get all items
+        app.get("/all-items", async (req, res) => {
+            try {
+                const items = itemCollections.find();
+                const result = await items.toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error fetching items" });
+            }
+        });
 
-        //update an item data
-        app.patch("/item/:id", async(req, res)=>{
-            const id=req.params.id;
-            // console.log(id);
-            const  updateItemData=req.body;
-            const filter={_id:new ObjectId(id)};
-            const options={upsert:true};
+        // Update an item data
+        app.patch("/item/:id", async (req, res) => {
+            const id = req.params.id;
+            const updateItemData = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
 
-            const updateDoc={
-                $set:{
+            const updateDoc = {
+                $set: {
                     ...updateItemData
                 }
+            };
+
+            try {
+                const result = await itemCollections.updateOne(filter, updateDoc, options);
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error updating item" });
+            }
+        });
+
+        // Delete item
+        app.delete("/item/:id", async (req, res) => {
+            const id = req.params.id; // Fixed
+            const filter = { _id: new ObjectId(id) };
+
+            try {
+                const result = await itemCollections.deleteOne(filter);
+                if (result.deletedCount === 0) {
+                    return res.status(404).send({ error: "Item not found" });
+                }
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error deleting item" });
+            }
+        });
+
+        // Find by category
+        app.get("/all-items/category", async (req, res) => {
+            let query = {};
+            if (req.query?.category) {
+                query = { category: req.query.category };
             }
 
-            //update
-
-            const result=await itemCollections.updateOne(filter, updateDoc, options);
-            res.send(result);
-        })
-
-        //delete item
-        app.delete("/item/:id", async(req, res)=>{
-            const id=req.params;
-            const filter={_id :new ObjectId(id)};
-            const result=await itemCollections.deleteOne(filter);
-            res.send(result);
-
-        })
-
-
-
-        //find by category
-        app.get("/all-items/category", async(req, res)=>{
-            let query={};
-            if(req.query?.category){
-                query={category:req.query.category};
-
+            try {
+                const result = await itemCollections.find(query).toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error fetching items by category" });
             }
-            const result=await itemCollections.find(query).toArray();
-            res.send(result);
-        })
+        });
 
+        // Single item
+        app.get("/item/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
 
-        //sinlge book
-
-    app.get("/item/:id", async(req, res)=>{
-        const id=req.params.id;
-        const filter={_id:new ObjectId(id)};
-        const result=await itemCollections.findOne(filter);
-        res.send(result)
-    })
-
-
-
+            try {
+                const result = await itemCollections.findOne(filter);
+                if (!result) {
+                    return res.status(404).send({ error: "Item not found" });
+                }
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: "Error fetching item" });
+            }
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
@@ -125,4 +140,4 @@ app.listen(port, () => {
     console.log(`Server is listening at port ${port}`);
 });
 
-module.exports=app
+module.exports = app;
